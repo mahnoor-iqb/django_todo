@@ -84,6 +84,7 @@ class UserDetailApiView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         user_instance.delete()
+        logger.info("User deleted")
         return Response(
             {"message": "Object deleted!"},
             status=status.HTTP_200_OK
