@@ -1,91 +1,77 @@
+import imp
 from user.models import User
-from user.serializers import UserSerializer
-from rest_framework.views import APIView
-from rest_framework.parsers import JSONParser
-from rest_framework.response import Response
+import user.serializers
 from rest_framework import status
+from utils.utils import BaseAPIView
 
 import logging
 logger = logging.getLogger('django')
 
 
-class UserApiView(APIView):
+class UserApiView(BaseAPIView):
+    serializer_class = user.serializers.UserSerializer
+
     # 1. List all
     def get(self, request, *args, **kwargs):
         users = User.objects.all()
-        user_serializer = UserSerializer(users, many=True)
-
+        user_serializer = self.serializer_class(users, many=True)
         logger.info("Users retreived successfully")
-        return Response(user_serializer.data, status=status.HTTP_200_OK)
+        return self.success_response(payload=user_serializer.data, description="Users retreived successfully")
 
     # 2. Create
     def post(self, request, *args, **kwargs):
-        data = JSONParser().parse(request)
-        user_serializer = UserSerializer(data=data)
+        user_serializer = self.serializer_class(data=request.data)
 
-        if user_serializer.is_valid():
-            user_serializer.save()
-            logger.info("User added successfully")
-            return Response(user_serializer.data, status=status.HTTP_201_CREATED)
+        if not user_serializer.is_valid():
+            logger.error("Unable to add user")
+            return self.bad_request_response(error=user_serializer.errors, description="Unable to add user")
 
-        logger.error("Unable to add user")
-        return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user_serializer.save()
+        logger.info("User added successfully")
+        return self.success_response(payload=user_serializer.data, description="User added successfully")
 
 
-class UserDetailApiView(APIView):
-
-    # Helper method
-    def get_object(self, user_id):
-        try:
-            return User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return None
+class UserDetailApiView(BaseAPIView):
+    serializer_class = user.serializers.UserSerializer
 
     # 3. Retrieve
     def get(self, request, user_id, *args, **kwargs):
-        user_instance = self.get_object(user_id)
+        user_instance = User.get_object(user_id)
+
         if not user_instance:
             logger.error("Object with user id does not exist")
-            return Response(
-                {"message": "Object with user id does not exist"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return self.bad_request_response(error="Object with provided id does not exist", description="Unable to retreive user")
 
-        serializer = UserSerializer(user_instance)
-
+        user_serializer = self.serializer_class(user_instance)
         logger.info("User retreived successfully")
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return self.success_response(payload=user_serializer.data, description="User retrieved successfully")
 
     # 4. Update
     def put(self, request, user_id, *args, **kwargs):
-        user_instance = self.get_object(user_id)
+        user_instance = User.get_object(user_id)
+
         if not user_instance:
             logger.error("Object with user id does not exist")
-            return Response(
-                {"message": "Object with user id does not exist"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        data = JSONParser().parse(request)
-        serializer = UserSerializer(
-            instance=user_instance, data=data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            logger.info("User updated successfully")
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return self.bad_request_response(error="Object with provided id does not exist", description="Unable to retreive user")
+
+        user_serializer = self.serializer_class(
+            instance=user_instance, data=request.data, partial=True)
+
+        if not user_serializer.is_valid():
+            return self.bad_request_response(error=user_serializer.errors, description="Unable to update user")
+
+        user_serializer.save()
+        logger.info("User updated successfully")
+        return self.success_response(payload=user_serializer.data, description="User updated successfully")
 
     # 5. Delete
     def delete(self, request, user_id, *args, **kwargs):
-        user_instance = self.get_object(user_id)
+        user_instance = User.get_object(user_id)
+
         if not user_instance:
             logger.error("Object with user id does not exist")
-            return Response(
-                {"message": "Object with user id does not exists"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return self.bad_request_response(error="Object with provided id does not exist", description="Unable to retreive user")
+
         user_instance.delete()
         logger.info("User deleted")
-        return Response(
-            {"message": "Object deleted!"},
-            status=status.HTTP_200_OK
-        )
+        return self.success_response(payload={}, description="User deleted successfully")

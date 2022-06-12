@@ -5,6 +5,6 @@ from task.views import (
 )
 
 urlpatterns = [
-    path('tasks', TaskApiView.as_view()),
-    path('tasks/<int:task_id>', TaskDetailApiView.as_view()),
+    path('', TaskApiView.as_view(), name="task_api"),
+    path('<int:task_id>', TaskDetailApiView.as_view(), name="task_detail_api"),
 ]
