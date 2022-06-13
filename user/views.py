@@ -1,17 +1,16 @@
-import imp
 from user.models import User
 import user.serializers
-from rest_framework import status
 from utils.utils import BaseAPIView
+from rest_framework.authentication import SessionAuthentication
+from rest_framework import permissions
+from django.contrib.auth import login, logout
 
 import logging
 logger = logging.getLogger('django')
 
-
 class UserApiView(BaseAPIView):
     serializer_class = user.serializers.UserSerializer
 
-    # 1. List all
     def get(self, request, *args, **kwargs):
         users = User.objects.all()
         user_serializer = self.serializer_class(users, many=True)
@@ -75,3 +74,32 @@ class UserDetailApiView(BaseAPIView):
         user_instance.delete()
         logger.info("User deleted")
         return self.success_response(payload={}, description="User deleted successfully")
+
+
+class LoginView(BaseAPIView):
+    permission_classes = ()
+    authentication_classes = ()
+
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        if not email or not password:
+            return self.bad_request_response(error="User email or password provided", description="Unable to log in user")
+
+        user_instance = User.objects.get(email=email)
+
+        if not user_instance:
+            return self.bad_request_response(error="User email does not exist", description="Unable to log in user")
+
+        if user_instance.password != password:
+            return self.bad_request_response(error="User password does not match", description="Unable to log in user")
+        
+        login(request, user_instance)
+
+        return self.success_response(payload={}, description="Login successful")
+
+class LogoutView(BaseAPIView):
+    def get(self, request):
+        logout(request)
+        return self.success_response(payload={}, description="Logout successful")
