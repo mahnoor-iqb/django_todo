@@ -10,10 +10,16 @@ class Task(models.Model):
     description = models.CharField(max_length=500)
 
     creation_date = models.DateTimeField(auto_now_add=True)
-    due_date = models.DateTimeField()
-    completion_date = models.DateTimeField()
+    due_date = models.DateTimeField(null=True)
+    completion_date = models.DateTimeField(null=True)
     completion_status = models.BooleanField(default=False)
 
-    file_attachment = models.CharField(max_length=500)
+    file_attachment = models.CharField(max_length=500,null=True)
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def get_object(task_id):
+        try:
+            return Task.objects.get(id=task_id)
+        except Task.DoesNotExist:
+            return None

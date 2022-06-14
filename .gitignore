@@ -1,3 +1,4 @@
 venv
 logger.log
 __pycache__
+.env
