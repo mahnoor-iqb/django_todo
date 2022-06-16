@@ -1,26 +1,38 @@
 from task.models import Task
-import task.serializers
-from rest_framework import status
-from utils.utils import BaseAPIView
+from utils.base import BaseAPIView
+from django_filters.rest_framework import DjangoFilterBackend
+from task.filters import TaskFilter
+from django.db.models import Q
+from task.serializers import TaskSerializer
 
 import logging
 logger = logging.getLogger('django')
 
 
 class TaskApiView(BaseAPIView):
-    serializer_class = task.serializers.TaskSerializer
+    serializer_class = TaskSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TaskFilter
 
     # 1. List all
     def get(self, request, *args, **kwargs):
-        tasks = Task.objects.select_related('user').all()
-        task_serializer = self.serializer_class(tasks, many=True)
+        tasks = Task.objects.select_related('user').filter(user=request.user.id).order_by('due_date').all()
+
+        filtered_tasks = self.filterset_class(request.GET, queryset=tasks)
+
+        paginated = self.paginate_queryset(request, filtered_tasks.qs)
+        task_serializer = self.serializer_class(paginated, many=True)
 
         logger.info("Tasks retreived successfully")
         return self.success_response(payload=task_serializer.data, description="Tasks retreived successfully")
 
     # 2. Create
     def post(self, request, *args, **kwargs):
-        task_serializer = self.serializer_class(data=request.data)
+        task_data = request.data
+        
+        # Add user id
+        task_data['user'] = int(request.user.id)
+        task_serializer = self.serializer_class(data=task_data)
 
         if not task_serializer.is_valid():
             logger.error("Unable to add task")
@@ -28,15 +40,15 @@ class TaskApiView(BaseAPIView):
 
         task_serializer.save()
         logger.info("Task added successfully")
-        return self.success_response(payload=task_serializer.data, description="Task added successfully")
+        return self.created_response(payload=task_serializer.data, description="Task added successfully")
 
 
 class TaskDetailApiView(BaseAPIView):
-    serializer_class = task.serializers.TaskSerializer
+    serializer_class = TaskSerializer
 
     # 3. Retrieve
     def get(self, request, task_id, *args, **kwargs):
-        task_instance = Task.get_object(task_id)
+        task_instance = Task.get_object(Q(id=task_id) & Q(user=request.user.id))
 
         if not task_instance:
             logger.error("Object with task id does not exist")
@@ -48,7 +60,7 @@ class TaskDetailApiView(BaseAPIView):
 
     # 4. Update
     def put(self, request, task_id, *args, **kwargs):
-        task_instance = Task.get_object(task_id)
+        task_instance = Task.get_object(Q(id=task_id) & Q(user=request.user.id))
 
         if not task_instance:
             logger.error("Object with task id does not exist")
@@ -64,10 +76,9 @@ class TaskDetailApiView(BaseAPIView):
         logger.info("Task updated successfully")
         return self.success_response(payload=task_serializer.data, description="Task updated successfully")
 
-
     # 5. Delete
     def delete(self, request, task_id, *args, **kwargs):
-        task_instance = Task.get_object(task_id)
+        task_instance = Task.get_object(Q(id=task_id) & Q(user=request.user.id))
 
         if not task_instance:
             logger.error("Object with task id does not exist")
