@@ -20,11 +20,13 @@ def custom_exception_handler(exc, context):
             "description": "You do not have permission to perform this operation",
         }, status=status.HTTP_403_FORBIDDEN)
 
-    else:
-        return Response({
-            "payload": {},
-            "success": False,
-            "error": {},
-            "description": "Something went wrong",
-        }, status=status.HTTP_400_BAD_REQUEST)
+    # else:
+    #     return Response({
+    #         "payload": {},
+    #         "success": False,
+    #         "error": {},
+    #         "description": "Something went wrong",
+    #     }, status=status.HTTP_400_BAD_REQUEST)
 
+        
+    # return exception_handler(exc, context)

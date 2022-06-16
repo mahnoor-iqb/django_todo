@@ -97,7 +97,7 @@ class SignupView(BaseAPIView):
         }
 
         user_serializer = serializer_class(data=data)
-
+ 
         if not user_serializer.is_valid():
             logger.error("Unable to add user")
             return self.bad_request_response(error=user_serializer.errors, description="Unable to add user")
@@ -110,25 +110,16 @@ class SignupView(BaseAPIView):
 class LoginView(BaseAPIView):
     permission_classes = ()
     authentication_classes = ()
+    login_serializer = user.serializers.UserLoginSerializer
 
     def post(self, request):
-        email = request.data.get("email")
-        password = request.data.get("password")
-  
-        if not email or not password:
-            return self.bad_request_response(error="User email or password missing", description="Unable to log in user")
+        serializer = self.login_serializer(data=request.data)
 
-        user_instance = User.objects.get(email=email)
+        if not serializer.is_valid():
+            return self.bad_request_response(error=serializer.errors, description="Unable to log in user")
 
-        if not user_instance:
-            return self.bad_request_response(error="User email does not exist", description="Unable to log in user")
-
-        if not check_password(password, user_instance.password):
-            return self.bad_request_response(error="User password does not match", description="Unable to log in user")
-
-        # user_instance = authenticate(email=email, password=password)
+        user_instance = User.objects.get(email=request.data.get("email"))
         login(request, user_instance)
-
         return self.success_response(payload={}, description="Login successful")
 
 
