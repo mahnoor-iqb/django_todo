@@ -1,4 +1,6 @@
+import imp
 from django.db import models
+from django.db.models import Q
 from user.models import User
 
 class Task(models.Model):
@@ -18,8 +20,8 @@ class Task(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    def get_object(task_id, user_id):
+    def get_object(query):
         try:
-            return Task.objects.get(id=task_id, user = user_id)
+            return Task.objects.get(query)
         except Task.DoesNotExist:
             return None

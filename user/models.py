@@ -22,8 +22,8 @@ class User(AbstractBaseUser):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["password"]
 
-    def get_object(user_id):
+    def get_object(query):
         try:
-            return User.objects.get(id=user_id)
+            return User.objects.get(query)
         except User.DoesNotExist:
             return None
