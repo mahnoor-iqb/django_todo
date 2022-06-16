@@ -26,9 +26,6 @@ class UserLoginSerializer(serializers.Serializer):
             user = User.objects.get(email=email)
 
         except User.DoesNotExist:
-            user = None
-
-        if not user:
             raise serializers.ValidationError(
                 'User with provided email not found.'
             )
