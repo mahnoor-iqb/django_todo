@@ -28,10 +28,18 @@ class TaskApiView(BaseAPIView):
 
     # 2. Create
     def post(self, request, *args, **kwargs):
-        task_data = request.data
         
-        # Add user id
-        task_data['user'] = int(request.user.id)
+        task_data = {
+            'title': request.data.get('title'), 
+            'description': request.data.get('description'), 
+            'creation_date': request.data.get('creation_date'), 
+            'due_date': request.data.get('due_date'),
+            'completion_date':request.data.get('completion_date'),
+            'completion_status:':request.data.get('completion_status'),
+            'file_attachment':request.data.get('file_attachment'),
+            'user': request.user.id
+        }
+
         task_serializer = self.serializer_class(data=task_data)
 
         if not task_serializer.is_valid():
