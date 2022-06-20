@@ -15,10 +15,10 @@ class TestViews(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.signup_url = reverse('signup')
-        self.login_url = reverse('login')
-        self.task_api_url = reverse('task_api')
-        self.task_detail_api_url = reverse('task_detail_api', args=[5])
+        self.signup_url = reverse('user-v1:signup')
+        self.login_url = reverse('user-v1:login')
+        self.task_api_url = reverse('task-v1:task_api')
+        self.task_detail_api_url = reverse('task-v1:task_detail_api', args=[5])
 
         # Add test user
         self.user = User(email='testuser@gmail.com',

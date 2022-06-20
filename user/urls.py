@@ -8,6 +8,8 @@ from user.views import (
     LogoutView
 )
 
+app_name = "user"
+
 urlpatterns = [
     path('admin', AdminView.as_view(), name="admin_api"),
     path('admin/<int:user_id>', AdminDetailView.as_view(), name="admin_delete_api"),
