@@ -4,6 +4,8 @@ from task.views import (
     TaskDetailApiView,
 )
 
+app_name = "task"
+
 urlpatterns = [
     path('', TaskApiView.as_view(), name="task_api"),
     path('<int:task_id>', TaskDetailApiView.as_view(), name="task_detail_api"),
